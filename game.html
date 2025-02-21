@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>스네이크 게임</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #1a1a1a;
+        }
+
+        #gameCanvas {
+            position: absolute;
+            border: 1px solid white;
+            top: 202px;
+            left: 100px;
+            width: 960px;
+            height: 540px;
+        }
+
+        #startButton {
+            position: absolute;
+            top: 762px;
+            left: 500px;
+            padding: 10px 20px;
+            font-size: 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        #startButton:hover {
+            background-color: #45a049;
+        }
+
+        #playTime {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: white;
+            font-size: 20px;
+            font-family: Arial, sans-serif;
+        }
+    </style>
+</head>
+
+<body>
+    <button id="startButton">게임 시작</button>
+    <canvas id="gameCanvas" width="960" height="540"></canvas>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const startButton = document.getElementById("startButton");
+
+        const box = 20;
+        const rows = canvas.height / box;
+        const columns = canvas.width / box;
+        let score, snake, food, d, game, changingDirection, startTime;
+
+        function initGame() {
+            score = 0;
+            snake = [{ x: 10 * box, y: 10 * box }];
+            food = {
+                x: Math.floor(Math.random() * columns) * box,
+                y: Math.floor(Math.random() * rows) * box
+            };
+            d = "RIGHT";
+            changingDirection = false;
+            startTime = Date.now();
+
+            document.addEventListener("keydown", direction);
+            game = setInterval(draw, 100);
+        }
+
+        startButton.addEventListener("click", () => {
+            startButton.style.display = "none";
+            canvas.style.display = "block";
+            initGame();
+        });
+
+        function direction(event) {
+            if (changingDirection) return;
+            changingDirection = true;
+
+            if (event.keyCode == 37 && d != "RIGHT") d = "LEFT";
+            else if (event.keyCode == 38 && d != "DOWN") d = "UP";
+            else if (event.keyCode == 39 && d != "LEFT") d = "RIGHT";
+            else if (event.keyCode == 40 && d != "UP") d = "DOWN";
+
+            setTimeout(() => changingDirection = false, 100);
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            for (let i = 0; i < snake.length; i++) {
+                ctx.fillStyle = (i == 0) ? "green" : "white";
+                ctx.fillRect(snake[i].x, snake[i].y, box, box);
+            }
+
+            ctx.fillStyle = "red";
+            ctx.fillRect(food.x, food.y, box, box);
+
+            ctx.fillStyle = "white";
+            ctx.font = "20px Arial";
+            ctx.fillText("Score: " + score, box, box);
+
+            // 플레이 타임 표시
+            const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+            ctx.fillText("Time: " + elapsedTime + "s", canvas.width - 120, 30);
+
+            let snakeX = snake[0].x;
+            let snakeY = snake[0].y;
+
+            if (d == "LEFT") snakeX -= box;
+            if (d == "UP") snakeY -= box;
+            if (d == "RIGHT") snakeX += box;
+            if (d == "DOWN") snakeY += box;
+
+            if (snakeX < 0 || snakeX >= canvas.width || snakeY < 0 || snakeY >= canvas.height) {
+                endGame(elapsedTime);
+                return;
+            }
+
+            for (let i = 1; i < snake.length; i++) {
+                if (snake[i].x == snakeX && snake[i].y == snakeY) {
+                    endGame(elapsedTime);
+                    return;
+                }
+            }
+
+            let newHead = { x: snakeX, y: snakeY };
+
+            if (snakeX == food.x && snakeY == food.y) {
+                score++;
+                food = {
+                    x: Math.floor(Math.random() * columns) * box,
+                    y: Math.floor(Math.random() * rows) * box
+                };
+            } else {
+                snake.pop();
+            }
+
+            snake.unshift(newHead);
+        }
+
+        function endGame(elapsedTime) {
+            clearInterval(game);
+            alert(`Game Over!\nScore: ${score}\nTime: ${elapsedTime}s`);
+            startButton.style.display = "block";
+        }
+    </script>
+</body>
+
+</html>
